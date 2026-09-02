@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 13, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/Mattj/Documents/Projects/FantasyFootball/fantasyfootball/app/favicon.ico.mjs%20(structured%20image%20object)"],"sourcesContent":["import src from \"IMAGE\";\nexport default { src, width: 256, height: 256 }\n"],"names":["src","width","height"],"mappings":";;;;AAAA;;uCACe;IAAEA,KAAAA,mIAAG;IAAEC,OAAO;IAAKC,QAAQ;AAAI"}},
-    {"offset": {"line": 28, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/Mattj/Documents/Projects/FantasyFootball/fantasyfootball/app/page.tsx"],"sourcesContent":["import Image from \"next/image\";\nimport StatButton from \"./components/StatButton\";\n\nexport default function Home() {\n  return (\n    <div className=\"flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black\">\n      <h1 className=\"font-bold text-2xl\">Fantasy Football</h1>\n    </div>\n  );\n}\n"],"names":["Home","className"],"mappings":";;;;;;AAGe,SAASA;IACtB,qBACE,8OAAC;QAAIC,WAAU;kBACb,cAAA,8OAAC;YAAGA,WAAU;sBAAqB;;;;;;;;;;;AAGzC"}}]
-}

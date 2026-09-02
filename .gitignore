@@ -2,7 +2,7 @@
 
 # dependencies
 node_modules/
-/.pnp
+.pnp
 .pnp.*
 .yarn/*
 !.yarn/patches
@@ -10,16 +10,15 @@ node_modules/
 !.yarn/releases
 !.yarn/versions
 
-
 # testing
-/coverage
+coverage/
 
 # next.js
-/.next/
-/out/
+.next/
+out/
 
 # production
-/build
+build/
 
 # misc
 .DS_Store
@@ -44,6 +43,12 @@ next-env.d.ts
 # R files
 *.r
 
-# Venv
-backend/venv/
+# python
+__pycache__/
+*.pyc
 
+# libreoffice/openoffice lock files
+.~lock.*#
+
+# venv
+backend/venv/
