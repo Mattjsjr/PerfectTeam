@@ -13,6 +13,10 @@ node_modules/
 # testing
 coverage/
 
+# not necessary
+backend/csv/
+backend/python/update_tables.py
+
 # next.js
 .next/
 out/

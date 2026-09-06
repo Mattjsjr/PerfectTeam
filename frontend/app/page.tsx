@@ -16,7 +16,7 @@ export default function Home() {
   2 : Loading
   3 : Loaded
   */
-  const [mainContentState, setMainContentState] = useState(1)
+  const [mainContentState, setMainContentState] = useState(3)
   const selectedStats : Record<string, StatEntry> = {}
   const settings = useRef<Record<string, StatEntry>> ({})
   const [toggleMap, setToggleMap] = useState<Record<string, boolean>>({})
@@ -70,8 +70,8 @@ export default function Home() {
     <>
       <div className="flex flex-col flex-1 items-center justify-start bg-zinc-50 font-sans dark:bg-[#000a19] gap-4">
         <header className="flex items-center p-2 top-0 left-0 w-full dark:bg-[#4e55e3] text-white text-2xl"><h1>Perfect Team</h1></header>
-        <main className="flex flex-col items-center">
-          <DownloadCard csvLink={csvUrl} loading={mainContentState}></DownloadCard>
+        <main className="flex flex-col items-center align-center">
+          <DownloadCard csvLink={csvUrl} loading={mainContentState} buttonLabel="Your Strategy"></DownloadCard>
           <Toggles.Provider value={{toggleMap: toggleMap, updateMap: updateToggleMap}}>
             <StatButtonContainer label="League Settings" endpoint="/settings" loading={mainContentState} submit={getSettings}></StatButtonContainer>
             <StatButtonContainer label="Offensive Stats" endpoint="/offense" loading={mainContentState} submit={getStats}></StatButtonContainer>

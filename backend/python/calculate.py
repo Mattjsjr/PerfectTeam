@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import heapq
 import csv
 import io
-from .dictionaries import UI_TO_DB, DB_TO_UI
+from tools.dictionaries import UI_TO_DB, DB_TO_UI
 
 def fetch_all_players(supabase, columns):
     all_rows = []
@@ -14,7 +14,7 @@ def fetch_all_players(supabase, columns):
 
     while True:
         response = (
-            supabase.table("player")
+            supabase.table("player_new")
             .select(",".join(columns))
             .range(start, start + page_size - 1)
             .execute()
@@ -37,7 +37,7 @@ def calculate(user_selected_data, settings, toggles):
     {tackles: {selected: true, value: 3}}
     '''
     stats_to_calculate = {}
-    stats_to_calculate_query = ["first_name", "last_name", "player_position"]
+    stats_to_calculate_query = ["player", "position"]
 
     # Figure out what stats to query
     for ui_stat, ui_stat_value in user_selected_data.items():
@@ -78,21 +78,18 @@ def calculate(user_selected_data, settings, toggles):
 
             user_facing_stat = DB_TO_UI[key] if key in DB_TO_UI else ""
 
-            if key == 'first_name':
+            if key == 'player':
                 player_attributes[player_id]["name"] += value
-
-            elif key == 'last_name':
-                player_attributes[player_id]["name"] += f' {value}'
     
             elif key in stats_to_calculate:
                 if toggles[user_facing_stat]:
                     player_score += value / float(stats_to_calculate[key]['value'])
                 else:
                     player_score += value * float(stats_to_calculate[key]['value']) 
-            elif key == 'player_position':
+            elif key == 'position':
                 player_position = value
-                if player_position == "DB":
-                    print("DB") 
+                if player_position == 'DST':
+                    print('DST')
                 player_attributes[player_id]["position"] = player_position
 
         player_attributes[player_id]["score"] = player_score
@@ -101,11 +98,11 @@ def calculate(user_selected_data, settings, toggles):
         try:
             print(settings)
             print(settings['Teams'])
-            print(settings['Teams']['value'])
+            print(settings['Teams'])
 
             print(settings[player_position])
-            print(settings[player_position]['value'])
-            players_taken_at_position = int(settings['Teams']['value']) * int(settings[player_position]['value'])
+            print(settings[player_position])
+            players_taken_at_position = int(settings['Teams']) * int(settings[player_position])
             if player_position in position_heaps:
                 if position_heaps[player_position]["length"] < players_taken_at_position:
                     heapq.heappush(position_heaps[player_position]["heap"], player_score)
@@ -129,7 +126,9 @@ def calculate(user_selected_data, settings, toggles):
         player_name = player["name"]
         player_position = player["position"]
         player_score = player["score"]
-        score = position_heaps[player_position]["heap"][0]
+        print(type(position_heaps.get(player_position)))
+        if position_heaps.get(player_position).get("heap"):
+            score = position_heaps[player_position]["heap"][0]
 
         writer.writerow([player_name, player_position, player_score, player_score - score])
     print(output.getvalue())
@@ -140,6 +139,8 @@ def calculate(user_selected_data, settings, toggles):
 
 
 if __name__ == '__main__':
+
+    test_settings = {'Teams': '12', 'QB': '1', 'RB': '2', 'WR':'2', 'TE':'1', 'DB':'1', 'DL':'1', 'LB':'1', 'K':'1', 'DST': '0'}
     test_data = {
         # Offense
         'Passing Yards':        {'selected': True, 'value': '25'},
@@ -150,15 +151,9 @@ if __name__ == '__main__':
         'Receptions':            {'selected': True, 'value': '0.5'},
         'Receiving Yards':       {'selected': True, 'value': '10'},
         'Receiving TDs':         {'selected': True, 'value': '6'},
-        'Return Yards':          {'selected': True, 'value': '25'},
         'Fumbles Lost':          {'selected': True, 'value': '-2'},
 
         # Kickers
-        'FG Made 0-19 Yds':      {'selected': True, 'value': '3'},
-        'FG Made 20-29 Yds':     {'selected': True, 'value': '3'},
-        'FG Made 30-39 Yds':     {'selected': True, 'value': '3'},
-        'FG Made 40-49 Yds':     {'selected': True, 'value': '4'},
-        'FG Made 50+ Yds':       {'selected': True, 'value': '5'},
         'Extra Points Made':     {'selected': True, 'value': '1'},
 
         # Defense
@@ -171,80 +166,27 @@ if __name__ == '__main__':
         'Defensive TD':          {'selected': True, 'value': '4'},
         'Pass Defended':         {'selected': True, 'value': '0.5'},
     }
-    test_settings = {'Teams': '12', 'QB': '1', 'RB': '2', 'WR':'2', 'TE':'1', 'DB':'1', 'DL':'1', 'LB':'1', 'K':'1'}
+
     test_toggles = {
         "Pass Attempts": True,
         "Completions": False,
         "Passing Yards": True,
-        "Passing Yards/Game": False,
         "Passing TDs": False,
         "Interceptions Thrown": False,
-        "Passer Rating": False,
-        "Pass TDs 0-9 Yds": False,
-        "Pass TDs 10-19 Yds": False,
-        "Pass TDs 20-29 Yds": False,
-        "Pass TDs 30-39 Yds": False,
-        "Pass TDs 40-49 Yds": False,
-        "Pass TDs 50+ Yds": False,
-        "Games w/ 250+ Pass Yds": False,
-        "Games w/ 300+ Pass Yds": False,
-        "Games w/ 350+ Pass Yds": False,
-        "Sacks Taken": False,
         "Rush Attempts": False,
         "Rushing Yards": True,
-        "Yards per Carry": False,
         "Rushing TDs": False,
-        "Rush TDs 0-9 Yds": False,
-        "Rush TDs 10-19 Yds": False,
-        "Rush TDs 20-29 Yds": False,
-        "Rush TDs 30-39 Yds": False,
-        "Rush TDs 40-49 Yds": False,
-        "Rush TDs 50+ Yds": False,
-        "Games w/ 50+ Rush Yds": False,
-        "Games w/ 100+ Rush Yds": False,
-        "Targets": False,
         "Receptions": False,
         "Receiving Yards": True,
-        "Receiving Yards/Game": False,
-        "Yards per Reception": False,
         "Receiving TDs": False,
-        "Red Zone Targets": False,
-        "Rec TDs 0-9 Yds": False,
-        "Rec TDs 10-19 Yds": False,
-        "Rec TDs 20-29 Yds": False,
-        "Rec TDs 30-39 Yds": False,
-        "Rec TDs 40-49 Yds": False,
-        "Rec TDs 50+ Yds": False,
-        "Games w/ 50+ Rec Yds": False,
-        "Games w/ 100+ Rec Yds": False,
-        "Games w/ 150+ Rec Yds": False,
-        "Games w/ 200+ Rec Yds": False,
         "Fumbles Lost": False,
-        "Return Yards": True,
         "Field Goals Made": False,
         "Field Goal Attempts": False,
-        "FG Made 0-19 Yds": False,
-        "FG Attempts 0-19 Yds": False,
-        "FG Made 20-29 Yds": False,
-        "FG Attempts 20-29 Yds": False,
-        "FG Made 30-39 Yds": False,
-        "FG Attempts 30-39 Yds": False,
-        "FG Made 40-49 Yds": False,
-        "FG Attempts 40-49 Yds": False,
-        "FG Made 50+ Yds": False,
-        "FG Attempts 50+ Yds": False,
-        "FG Attempts 40-49 (Count)": False,
-        "FG Attempts 50+ (Count)": False,
-        "FG Made 0-39 Yds": False,
-        "FG Attempts 0-39 Yds": False,
-        "Field Goals Missed": False,
         "Extra Points Made": False,
-        "Extra Point Attempts": False,
         "Team Interceptions": False,
         "Team Fumble Recoveries": False,
         "Team Sacks": False,
         "Team Forced Fumbles": False,
-        "Team Tackles": False,
         "Tackle Solo": False,
         "Tackle Assist": False,
         "Sack": False,
@@ -255,5 +197,5 @@ if __name__ == '__main__':
         "Defensive TD": False
     }
     output = calculate(test_data, test_settings, test_toggles)
-    with open("output.csv", 'w', newline='') as f:
+    with open("output.csv", 'wb') as f:  # 'wb', not 'w' -- and drop newline='', it's a text-mode-only arg
         f.write(output.getvalue())
