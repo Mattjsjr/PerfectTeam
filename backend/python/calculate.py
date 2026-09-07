@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import heapq
 import csv
 import io
-from tools.dictionaries import UI_TO_DB, DB_TO_UI
+from .tools.dictionaries import UI_TO_DB, DB_TO_UI
 
 def fetch_all_players(supabase, columns):
     all_rows = []

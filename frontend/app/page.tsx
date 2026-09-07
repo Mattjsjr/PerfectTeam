@@ -16,7 +16,7 @@ export default function Home() {
   2 : Loading
   3 : Loaded
   */
-  const [mainContentState, setMainContentState] = useState(3)
+  const [mainContentState, setMainContentState] = useState(1)
   const selectedStats : Record<string, StatEntry> = {}
   const settings = useRef<Record<string, StatEntry>> ({})
   const [toggleMap, setToggleMap] = useState<Record<string, boolean>>({})
