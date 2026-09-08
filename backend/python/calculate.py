@@ -88,20 +88,13 @@ def calculate(user_selected_data, settings, toggles):
                     player_score += value * float(stats_to_calculate[key]['value']) 
             elif key == 'position':
                 player_position = value
-                if player_position == 'DST':
-                    print('DST')
+
                 player_attributes[player_id]["position"] = player_position
 
         player_attributes[player_id]["score"] = player_score
             
         # If the position already has a heap, potentially push it, or else create the heap
         try:
-            print(settings)
-            print(settings['Teams'])
-            print(settings['Teams'])
-
-            print(settings[player_position])
-            print(settings[player_position])
             players_taken_at_position = int(settings['Teams']['value']) * int(settings[player_position]['value'])
             if player_position in position_heaps:
                 if position_heaps[player_position]["length"] < players_taken_at_position:
@@ -130,7 +123,6 @@ def calculate(user_selected_data, settings, toggles):
                 pass
             player_position = player["position"]
             player_score = player["score"]
-            print(player_name)
             if position_heaps.get(player_position).get("heap"):
                 score = position_heaps[player_position]["heap"][0]
             writer.writerow([player_name, player_position, player_score, player_score - score])

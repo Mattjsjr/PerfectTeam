@@ -17,7 +17,7 @@ export default function Home() {
   3 : Loaded
   */
   const [mainContentState, setMainContentState] = useState(1)
-  const selectedStats : Record<string, StatEntry> = {}
+  const [selectedStats, setSelectedStats] = useState<Record<string, StatEntry>>({})
   const settings = useRef<Record<string, StatEntry>> ({})
   const [toggleMap, setToggleMap] = useState<Record<string, boolean>>({})
   const [csvUrl, setCsvUrl] = useState("https://google.com");
@@ -32,10 +32,31 @@ export default function Home() {
     })
   }
 
+  function setStats(stat: string, patch : Partial<StatEntry>){
+    setSelectedStats(prev => {
+      const existing = prev[stat] ?? {selected : true, value: "0"};
+      return {
+        ...prev,
+        [stat] : {...existing, ...patch}
+      }
+    })
+
+    const existing = selectedStats[stat] ?? {selected: true, value: "0"};
+    selectedStats[stat] = { ...existing, ...patch };
+  }
+
+  function getSettings(setting: string, patch : Partial<StatEntry>){
+    const existing = settings.current[setting] ?? {value: "2"}
+    settings.current[setting] = {...existing, ...patch};
+    console.log(settings);
+    console.log("")
+  }
+
   async function submit(){
     setMainContentState(2);
 
     try {
+      console.log(selectedStats);
       const response = await fetch("http://localhost:5000/submit", {
         method: 'POST',
         headers: {
@@ -53,18 +74,6 @@ export default function Home() {
     }
   }
 
-  function getStats(stat: string, patch : Partial<StatEntry>){
-    const existing = selectedStats[stat] ?? {selected: true, value: "0"};
-    selectedStats[stat] = { ...existing, ...patch };
-  }
-
-  function getSettings(setting: string, patch : Partial<StatEntry>){
-    const existing = settings.current[setting] ?? {value: "2"}
-    settings.current[setting] = {...existing, ...patch};
-    console.log(settings);
-    console.log("")
-  }
-
   return (
 
     <>
@@ -76,8 +85,8 @@ export default function Home() {
           <DownloadCard csvLink={csvUrl} loading={mainContentState} buttonLabel="Your Strategy"></DownloadCard>
           <Toggles.Provider value={{toggleMap: toggleMap, updateMap: updateToggleMap}}>
             <StatButtonContainer label="League Settings" endpoint="/settings" loading={mainContentState} submit={getSettings}></StatButtonContainer>
-            <StatButtonContainer label="Offensive Stats" endpoint="/offense" loading={mainContentState} submit={getStats}></StatButtonContainer>
-            <StatButtonContainer label="Defensive Stats" endpoint="/defense" loading={mainContentState} submit={getStats}></StatButtonContainer>
+            <StatButtonContainer label="Offensive Stats" endpoint="/offense" loading={mainContentState} submit={setStats}></StatButtonContainer>
+            <StatButtonContainer label="Defensive Stats" endpoint="/defense" loading={mainContentState} submit={setStats}></StatButtonContainer>
           </Toggles.Provider>
         </main>
         <Loader state={mainContentState}></Loader>

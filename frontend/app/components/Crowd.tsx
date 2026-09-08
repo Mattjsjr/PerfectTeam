@@ -2,10 +2,11 @@ import { motion } from "framer-motion";
 
 // Deterministic pseudo-randomness so people/confetti don't reshuffle on every render,
 // but still look organic rather than gridded.
-const jitter = (i: number, amp: number) => Math.sin(i * 1.7) * amp;
+const round = (n: number) => Math.round(n * 1000) / 1000;
+const jitter = (i: number, amp: number) => round(Math.sin(i * 1.7) * amp);
 const pseudo = (i: number) => {
   const raw = Math.sin(i * 12.9898) * 43758.5453;
-  return raw - Math.floor(raw);
+  return round(raw - Math.floor(raw));
 }
 
 type Row = { count: number; y: number; spacing: number; headR: number; bodyW: number; bodyH: number; blur: string; opacity: number; colorClass: string; jumpEvery?: number };
