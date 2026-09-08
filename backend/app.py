@@ -28,7 +28,7 @@ def defense():
 @app.route("/settings")
 def settings():
     RESPONSE = {}
-    FIELD_ENTRY = ["Teams", "QB", "RB", "WR", "TE", "DB", "DL", "LB", "K"]
+    FIELD_ENTRY = ["Teams", "QB", "RB", "WR", "TE", "DB", "DL", "LB", "K", "DST"]
     RESPONSE["field_entry"] = FIELD_ENTRY
     RESPONSE["stat_button"] = []
     return jsonify(RESPONSE)

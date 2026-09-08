@@ -16,10 +16,10 @@ export default function PlayBookX({delay, strokeDuration, positionX, positionY} 
 
     return (
         <>
-            <svg viewBox="0 0 125 125" className="w-[6%] absolute" style={{ left: `${positionX}%`, top: `${positionY}%` }}>
+            <svg viewBox="0 0 125 125" className="w-[4%] absolute" style={{ left: `${positionX}%`, top: `${positionY}%` }}>
                 <motion.path
                     d={`M 0 0 C 45 42, ${generateMiddle(40, 100)} ${generateMiddle(49, 100)}, 120 125`}
-                    stroke="white"
+                    stroke="currentColor"
                     strokeWidth={8}
                     fill="none"
                     initial={{ pathLength: 0 }}
@@ -28,7 +28,7 @@ export default function PlayBookX({delay, strokeDuration, positionX, positionY} 
                 />
                 <motion.path
                     d={`M 125 0 C 83 42,  ${generateMiddle(40, 100)} ${generateMiddle(40, 100)}, 0 125`}
-                    stroke="white"
+                    stroke="currentColor"
                     strokeWidth={8}
                     fill="none"
                     initial={{ pathLength: 0 }}

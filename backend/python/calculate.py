@@ -102,7 +102,7 @@ def calculate(user_selected_data, settings, toggles):
 
             print(settings[player_position])
             print(settings[player_position])
-            players_taken_at_position = int(settings['Teams']) * int(settings[player_position])
+            players_taken_at_position = int(settings['Teams']['value']) * int(settings[player_position]['value'])
             if player_position in position_heaps:
                 if position_heaps[player_position]["length"] < players_taken_at_position:
                     heapq.heappush(position_heaps[player_position]["heap"], player_score)
@@ -122,17 +122,21 @@ def calculate(user_selected_data, settings, toggles):
     # Loop through all the players and calculate final scores 
 
     for player in player_attributes.values():
-        
-        player_name = player["name"]
-        player_position = player["position"]
-        player_score = player["score"]
-        print(type(position_heaps.get(player_position)))
-        if position_heaps.get(player_position).get("heap"):
-            score = position_heaps[player_position]["heap"][0]
 
-        writer.writerow([player_name, player_position, player_score, player_score - score])
-    print(output.getvalue())
-    print(output.getvalue())
+        try:
+            player_name = player["name"]
+
+            if player_name == 'Arizona Cardinals':
+                pass
+            player_position = player["position"]
+            player_score = player["score"]
+            print(player_name)
+            if position_heaps.get(player_position).get("heap"):
+                score = position_heaps[player_position]["heap"][0]
+            writer.writerow([player_name, player_position, player_score, player_score - score])
+        except ():
+            print(f'Error')
+
     encoded_output = io.BytesIO(output.getvalue().encode('utf-8'))
 
     return encoded_output

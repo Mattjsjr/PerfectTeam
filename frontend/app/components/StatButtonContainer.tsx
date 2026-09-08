@@ -32,31 +32,31 @@ function StatButtonContainer({ label, endpoint, loading, submit } : {label : str
 
 
     return(
-        <div className={loading === 1 
-        ? `flex flex-col gap-4 flex-wrap items-center justify-center w-4/5 py-4 px-4 bg-[#051122] text-white rounded-sm` 
-        : loading=== 0 
-            ? "flex flex-col gap-4 flex-wrap items-center justify-center w-4/5 py-4 px-4 bg-[#051122] text-white rounded-sm"
+    <div className={loading === 1
+        ? `flex flex-col gap-6 flex-wrap items-center justify-center w-4/5 py-6 px-6 bg-card border border-border text-foreground rounded-lg`
+        : loading === 0
+            ? "flex flex-col gap-6 flex-wrap items-center justify-center w-4/5 py-6 px-6 bg-card border border-border text-foreground rounded-lg"
             : "hidden"}>
-            <h1 className="font-bold text-xl">{label}</h1>
-            <div className="flex flex-row gap-4 flex-wrap items-center justify-center">
-                {(stats.stat_button ?? []).map((stat, index) => (
-                    <StatButton 
-                    key={index} 
-                    label={stat} 
-                    onSelect={handleSelect}>
-                    </StatButton>
-                ))}
-            </div>
-            <div className="flex flex-row gap-4 flex-wrap items-center justify-center">
-                {(stats.field_entry ?? []).map((stat, index) => (
-                    <FieldEntry 
-                    key={index} 
-                    label={stat} 
-                    onSelect={handleSelect}>
-                    </FieldEntry>
-                ))}
-            </div>
+        <h1 className="font-heading font-bold text-2xl tracking-wide">{label}</h1>
+        <div className="flex flex-row gap-3 flex-wrap items-center justify-center">
+            {(stats.stat_button ?? []).map((stat, index) => (
+                <StatButton
+                key={index}
+                label={stat}
+                onSelect={handleSelect}>
+                </StatButton>
+            ))}
         </div>
+        <div className="flex flex-row gap-3 flex-wrap items-center justify-center">
+            {(stats.field_entry ?? []).map((stat, index) => (
+                <FieldEntry
+                key={index}
+                label={stat}
+                onSelect={handleSelect}>
+                </FieldEntry>
+            ))}
+        </div>
+    </div>
 
     )
 }

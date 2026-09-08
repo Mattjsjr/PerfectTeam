@@ -12,12 +12,12 @@ export default function PlayBookO({delay, strokeDuration, positionX, positionY} 
 
     return (
         <>
-            <svg viewBox="0 0 125 125" className={`absolute w-[7%]`} style={{ left: `${positionX}%`, top: `${positionY}%` }}>
+            <svg viewBox="0 0 125 125" className={`absolute w-[5%]`} style={{ left: `${positionX}%`, top: `${positionY}%` }}>
             <motion.circle
                 cx={62.5}
                 cy={62.5}
                 r={generateRandNum(50, 60)}
-                stroke="white"
+                stroke="currentColor"
                 strokeWidth={8}
                 fill="none"
                 initial={{ pathLength: 0 }}
