@@ -5,7 +5,82 @@ from dotenv import load_dotenv
 import heapq
 import csv
 import io
-from .tools.dictionaries import UI_TO_DB, DB_TO_UI
+from pathlib import Path
+
+OFFENSE_STATS = {
+    "Pass Attempts": "pass_att",
+    "Completions": "pass_cmp",
+    "Passing Yards": "pass_yds",
+    "Passing TDs": "pass_tds",
+    "Interceptions Thrown": "pass_int",
+    "Rush Attempts": "rush_att",
+    "Rushing Yards": "rush_yds",
+    "Rushing TDs": "rush_tds",
+    "Receptions": "rec_rec",
+    "Receiving Yards": "rec_yds",
+    "Receiving TDs": "rec_tds",
+    "Fumbles Lost": "fl",
+    "Field Goals Made": "fg_fg",
+    "Field Goal Attempts": "fg_fga",
+    "Extra Points Made": "fg_xpt",
+}
+
+DEFENSE_STATS = {
+    "Team Interceptions": "dst_int",
+    "Team Fumble Recoveries": "dst_fr",
+    "Team Sacks": "dst_sack",
+    "Team Forced Fumbles": "dst_ff",
+    "Tackle Solo": "idp_tackle",
+    "Tackle Assist": "idp_assist",
+    "Sack": "idp_sack",
+    "Pass Defended": "idp_pd",
+    "Interception": "idp_int",
+    "Fumble Force": "idp_ff",
+    "Fumble Recovery": "idp_fr",
+    "Defensive TD": "idp_td",
+}
+
+UI_TO_DB = {
+    "Pass Attempts": "pass_att",
+    "Completions": "pass_cmp",
+    "Passing Yards": "pass_yds",
+    "Passing TDs": "pass_tds",
+    "Interceptions Thrown": "pass_int",
+    "Rush Attempts": "rush_att",
+    "Rushing Yards": "rush_yds",
+    "Rushing TDs": "rush_tds",
+    "Receptions": "rec_rec",
+    "Receiving Yards": "rec_yds",
+    "Receiving TDs": "rec_tds",
+    "Fumbles Lost": "fl",
+    "Field Goals Made": "fg_fg",
+    "Field Goal Attempts": "fg_fga",
+    "Extra Points Made": "fg_xpt",
+    "Team Interceptions": "dst_int",
+    "Team Fumble Recoveries": "dst_fr",
+    "Team Sacks": "dst_sack",
+    "Team Forced Fumbles": "dst_ff",
+    "Tackle Solo": "idp_tackle",
+    "Tackle Assist": "idp_assist",
+    "Sack": "idp_sack",
+    "Pass Defended": "idp_pd",
+    "Interception": "idp_int",
+    "Fumble Force": "idp_ff",
+    "Fumble Recovery": "idp_fr",
+    "Defensive TD": "idp_td",
+}
+ 
+DB_TO_UI = {v: k for k, v in UI_TO_DB.items()}
+
+
+def player_generator(supabase, columns, page_size=1000):
+    start = 0
+    while True:
+        batch = (supabase.table("player_new").select(",".join(columns)).range(start, start + page_size - 1).execute().data)
+        yield from batch
+        if len(batch) < page_size:
+            return
+        start += page_size
 
 def fetch_all_players(supabase, columns):
     all_rows = []
@@ -95,7 +170,7 @@ def calculate(user_selected_data, settings, toggles):
             
         # If the position already has a heap, potentially push it, or else create the heap
         try:
-            players_taken_at_position = int(settings['Teams']['value']) * int(settings[player_position]['value'])
+            players_taken_at_position = float(settings['Teams']) * float(settings[player_position])
             if player_position in position_heaps:
                 if position_heaps[player_position]["length"] < players_taken_at_position:
                     heapq.heappush(position_heaps[player_position]["heap"], player_score)
@@ -136,7 +211,17 @@ def calculate(user_selected_data, settings, toggles):
 
 if __name__ == '__main__':
 
-    test_settings = {'Teams': '12', 'QB': '1', 'RB': '2', 'WR':'2', 'TE':'1', 'DB':'1', 'DL':'1', 'LB':'1', 'K':'1', 'DST': '0'}
+    env_path = Path(__file__).resolve().parent.parent / ".env.local"
+    load_dotenv(env_path)
+
+    supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_SECRET_KEY"))
+    generated = player_generator(supabase, ["player", "position"], 3)
+
+
+    for player in generated:
+        print(player)
+
+    test_settings = {'Teams': '12', 'QB': '1.75', 'RB': '4.5', 'WR':'4.83', 'TE':'1.42', 'DB':'1', 'DL':'1', 'LB':'1', 'K':'1', 'DST': '0'}
     test_data = {
         # Offense
         'Passing Yards':        {'selected': True, 'value': '25'},

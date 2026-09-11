@@ -74,6 +74,10 @@ export default function Home() {
     }
   }
 
+  function reset(){
+    setMainContentState(1);
+  }
+
   return (
 
     <>
@@ -91,8 +95,10 @@ export default function Home() {
         </main>
         <Loader state={mainContentState}></Loader>
         <div className="pb-10">
-          <Btn label="Calculate" action={submit} loading={mainContentState}></Btn>
+          <Btn label="Calculate" action={submit} loading={mainContentState} appearOnPage={1}></Btn>
+          <Btn label="Back" action={reset} loading={mainContentState} appearOnPage={3}></Btn>
         </div>
+
       </div>
     </>
   );
