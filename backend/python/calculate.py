@@ -72,7 +72,6 @@ UI_TO_DB = {
  
 DB_TO_UI = {v: k for k, v in UI_TO_DB.items()}
 
-
 def player_generator(supabase, columns, page_size=1000):
     start = 0
     while True:
@@ -80,7 +79,18 @@ def player_generator(supabase, columns, page_size=1000):
         yield from batch
         if len(batch) < page_size:
             return
-        start += page_size
+
+def build_query(user_selected_data):
+    stats_to_calculate = {}
+    stats_to_calculate_query = ["player", "position"]
+
+    # Figure out what stats to query
+    for ui_stat, ui_stat_value in user_selected_data.items():
+        if ui_stat_value['selected']:
+            stats_to_calculate[UI_TO_DB[ui_stat]] = ui_stat_value
+            stats_to_calculate_query.append(UI_TO_DB[ui_stat])
+
+    return stats_to_calculate_query
 
 def fetch_all_players(supabase, columns):
     all_rows = []
@@ -104,6 +114,34 @@ def fetch_all_players(supabase, columns):
 
     return all_rows
 
+def score_player(player, toggles, stats_to_calculate):
+    player_score = 0
+    player_attributes ={}
+    player_position = ""
+    player_attributes["name"] = ''
+
+    # Calculate their score based on the selected stats, key refers to a stat or a column on the player table
+    for key, value in player.items(): # Loops through a player row
+
+        user_facing_stat = DB_TO_UI[key] if key in DB_TO_UI else ""
+
+        if key == 'player':
+            player_attributes["name"] += value
+
+        elif user_facing_stat in stats_to_calculate:
+            if toggles[user_facing_stat]:
+                player_score += value / float(stats_to_calculate[user_facing_stat]['value'])
+            else:
+                player_score += value * float(stats_to_calculate[user_facing_stat]['value']) 
+        elif key == 'position':
+            player_position = value
+
+            player_attributes["position"] = player_position
+
+    player_attributes["score"] = player_score
+    return player_score
+            
+
 
 def calculate(user_selected_data, settings, toggles):
     load_dotenv(r"C:\Users\Mattj\Documents\Projects\FantasyFootball\backend\.env.local")
@@ -111,21 +149,13 @@ def calculate(user_selected_data, settings, toggles):
     '''
     {tackles: {selected: true, value: 3}}
     '''
-    stats_to_calculate = {}
-    stats_to_calculate_query = ["player", "position"]
-
-    # Figure out what stats to query
-    for ui_stat, ui_stat_value in user_selected_data.items():
-        if ui_stat_value['selected']:
-            stats_to_calculate[UI_TO_DB[ui_stat]] = ui_stat_value
-            stats_to_calculate_query.append(UI_TO_DB[ui_stat])
         
     # Get the data from supabase
     supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_SECRET_KEY"))
     all_players = fetch_all_players(supabase, stats_to_calculate_query)
 
 
-    # data=[{'first_name': 'Andy', 'last_name': 'Dalton', 'player_position': 'QB', 'rec': 0, 'rush_3039_tds': 0, 'dst_fumbles': 0, 'idp_fum_force': 0},
+    # data=[{'first_name': 'Andy', 'last_name': 'Dalton', 'player_position': 'QB', 'rec': 0, 'rush_3039+++_tds': 0, 'dst_fumbles': 0, 'idp_fum_force': 0},
     # Go through the response, calculate player score, and find the worst replacement for each position
     
     '''
@@ -214,13 +244,6 @@ if __name__ == '__main__':
     env_path = Path(__file__).resolve().parent.parent / ".env.local"
     load_dotenv(env_path)
 
-    supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_SECRET_KEY"))
-    generated = player_generator(supabase, ["player", "position"], 3)
-
-
-    for player in generated:
-        print(player)
-
     test_settings = {'Teams': '12', 'QB': '1.75', 'RB': '4.5', 'WR':'4.83', 'TE':'1.42', 'DB':'1', 'DL':'1', 'LB':'1', 'K':'1', 'DST': '0'}
     test_data = {
         # Offense
@@ -277,6 +300,15 @@ if __name__ == '__main__':
         "Fumble Recovery": False,
         "Defensive TD": False
     }
+
+    query = build_query(test_data)
+
+    supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_SECRET_KEY"))
+    generated = player_generator(supabase, query, 3)
+
+    for player in generated:
+        player_score = score_player(player, test_toggles, test_data)
+
     output = calculate(test_data, test_settings, test_toggles)
     with open("output.csv", 'wb') as f:  # 'wb', not 'w' -- and drop newline='', it's a text-mode-only arg
         f.write(output.getvalue())
