@@ -116,32 +116,39 @@ def fetch_all_players(supabase, columns):
 
 def score_player(player, toggles, stats_to_calculate):
     player_score = 0
-    player_attributes ={}
-    player_position = ""
-    player_attributes["name"] = ''
 
     # Calculate their score based on the selected stats, key refers to a stat or a column on the player table
     for key, value in player.items(): # Loops through a player row
 
         user_facing_stat = DB_TO_UI[key] if key in DB_TO_UI else ""
 
-        if key == 'player':
-            player_attributes["name"] += value
-
-        elif user_facing_stat in stats_to_calculate:
+        if user_facing_stat in stats_to_calculate:
             if toggles[user_facing_stat]:
                 player_score += value / float(stats_to_calculate[user_facing_stat]['value'])
             else:
                 player_score += value * float(stats_to_calculate[user_facing_stat]['value']) 
-        elif key == 'position':
-            player_position = value
 
-            player_attributes["position"] = player_position
-
-    player_attributes["score"] = player_score
     return player_score
-            
 
+def replacement_scores(player, position_heaps, settings, player_score):
+
+    player_position = player.get("position")
+
+    try:
+        players_taken_at_position = float(settings['Teams']) * float(settings[player_position])
+        if player_position in position_heaps:
+            if position_heaps[player_position]["length"] < players_taken_at_position:
+                heapq.heappush(position_heaps[player_position]["heap"], player_score)
+                position_heaps[player_position]["length"] += 1
+            else:
+                if player_score > position_heaps[player_position]["heap"][0]:
+                    heapq.heapreplace(position_heaps[player_position]["heap"], player_score)
+            
+        else:
+            position_heaps[player_position] = {"length":0, "heap": []}
+                    
+    except:
+        pass            
 
 def calculate(user_selected_data, settings, toggles):
     load_dotenv(r"C:\Users\Mattj\Documents\Projects\FantasyFootball\backend\.env.local")
@@ -241,9 +248,11 @@ def calculate(user_selected_data, settings, toggles):
 
 if __name__ == '__main__':
 
+    # Loads .env.local
     env_path = Path(__file__).resolve().parent.parent / ".env.local"
     load_dotenv(env_path)
 
+    # Test settings
     test_settings = {'Teams': '12', 'QB': '1.75', 'RB': '4.5', 'WR':'4.83', 'TE':'1.42', 'DB':'1', 'DL':'1', 'LB':'1', 'K':'1', 'DST': '0'}
     test_data = {
         # Offense
@@ -270,7 +279,6 @@ if __name__ == '__main__':
         'Defensive TD':          {'selected': True, 'value': '4'},
         'Pass Defended':         {'selected': True, 'value': '0.5'},
     }
-
     test_toggles = {
         "Pass Attempts": True,
         "Completions": False,
@@ -301,14 +309,19 @@ if __name__ == '__main__':
         "Defensive TD": False
     }
 
-    query = build_query(test_data)
 
+    query = build_query(test_data)
     supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_SECRET_KEY"))
     generated = player_generator(supabase, query, 3)
+    position_heaps = {}
 
     for player in generated:
         player_score = score_player(player, test_toggles, test_data)
+        replacement_scores(player, position_heaps, test_settings, player_score)
 
+
+
+""" 
     output = calculate(test_data, test_settings, test_toggles)
     with open("output.csv", 'wb') as f:  # 'wb', not 'w' -- and drop newline='', it's a text-mode-only arg
-        f.write(output.getvalue())
+        f.write(output.getvalue()) """
