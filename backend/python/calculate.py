@@ -79,6 +79,7 @@ def player_generator(supabase, columns, page_size=1000):
         yield from batch
         if len(batch) < page_size:
             return
+        start += page_size
 
 def build_query(user_selected_data):
     stats_to_calculate = {}
@@ -146,93 +147,22 @@ def replacement_scores(player, position_heaps, settings, player_score):
             
         else:
             position_heaps[player_position] = {"length":0, "heap": []}
+            heapq.heappush(position_heaps[player_position]["heap"], player_score)
+            position_heaps[player_position]["length"] += 1
                     
-    except:
-        pass            
+    except Exception as e:
+        print(f"Error processing{player_position}: {e}")            
 
-def calculate(user_selected_data, settings, toggles):
-    load_dotenv(r"C:\Users\Mattj\Documents\Projects\FantasyFootball\backend\.env.local")
-
-    '''
-    {tackles: {selected: true, value: 3}}
-    '''
-        
-    # Get the data from supabase
-    supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_SECRET_KEY"))
-    all_players = fetch_all_players(supabase, stats_to_calculate_query)
-
-
-    # data=[{'first_name': 'Andy', 'last_name': 'Dalton', 'player_position': 'QB', 'rec': 0, 'rush_3039+++_tds': 0, 'dst_fumbles': 0, 'idp_fum_force': 0},
-    # Go through the response, calculate player score, and find the worst replacement for each position
-    
-    '''
-    position_heaps
-    Keeps track of the last replaceable player score at [0]. Accessing that score 
-    would look like position_heaps[player_position]["heap"][0]
-    '''
-    position_heaps = {}
+def write_to_csv(player_attributes, position_heaps):
 
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(["Name", "Position", "Overall Score", "Replacement Score"])  # header
-    player_attributes = {}
-    player_id = 0
-
-
-    for player in all_players:
-        player_score = 0
-        player_position = ""
-        player_attributes[player_id] = {}
-        player_attributes[player_id]["name"] = ''
-
-        # Calculate their score based on the selected stats, key refers to a stat or a column on the player table
-        for key, value in player.items(): # Loops through a player row
-
-            user_facing_stat = DB_TO_UI[key] if key in DB_TO_UI else ""
-
-            if key == 'player':
-                player_attributes[player_id]["name"] += value
-    
-            elif key in stats_to_calculate:
-                if toggles[user_facing_stat]:
-                    player_score += value / float(stats_to_calculate[key]['value'])
-                else:
-                    player_score += value * float(stats_to_calculate[key]['value']) 
-            elif key == 'position':
-                player_position = value
-
-                player_attributes[player_id]["position"] = player_position
-
-        player_attributes[player_id]["score"] = player_score
-            
-        # If the position already has a heap, potentially push it, or else create the heap
-        try:
-            players_taken_at_position = float(settings['Teams']) * float(settings[player_position])
-            if player_position in position_heaps:
-                if position_heaps[player_position]["length"] < players_taken_at_position:
-                    heapq.heappush(position_heaps[player_position]["heap"], player_score)
-                    position_heaps[player_position]["length"] += 1
-                else:
-                    if player_score > position_heaps[player_position]["heap"][0]:
-                        heapq.heapreplace(position_heaps[player_position]["heap"], player_score)
-                
-            else:
-                position_heaps[player_position] = {"length":0, "heap": []}
-                        
-        except:
-            pass
-
-        player_id += 1
-
-    # Loop through all the players and calculate final scores 
 
     for player in player_attributes.values():
 
         try:
             player_name = player["name"]
-
-            if player_name == 'Arizona Cardinals':
-                pass
             player_position = player["position"]
             player_score = player["score"]
             if position_heaps.get(player_position).get("heap"):
@@ -246,15 +176,15 @@ def calculate(user_selected_data, settings, toggles):
     return encoded_output
 
 
-if __name__ == '__main__':
+def calculate(stats, settings, toggles):
 
     # Loads .env.local
     env_path = Path(__file__).resolve().parent.parent / ".env.local"
     load_dotenv(env_path)
 
     # Test settings
-    test_settings = {'Teams': '12', 'QB': '1.75', 'RB': '4.5', 'WR':'4.83', 'TE':'1.42', 'DB':'1', 'DL':'1', 'LB':'1', 'K':'1', 'DST': '0'}
-    test_data = {
+    settings = {'Teams': '12', 'QB': '1.75', 'RB': '4.5', 'WR':'4.83', 'TE':'1.42', 'DB':'1', 'DL':'1', 'LB':'1', 'K':'1', 'DST': '0'}
+    stats = {
         # Offense
         'Passing Yards':        {'selected': True, 'value': '25'},
         'Passing TDs':           {'selected': True, 'value': '6'},
@@ -279,7 +209,7 @@ if __name__ == '__main__':
         'Defensive TD':          {'selected': True, 'value': '4'},
         'Pass Defended':         {'selected': True, 'value': '0.5'},
     }
-    test_toggles = {
+    toggles = {
         "Pass Attempts": True,
         "Completions": False,
         "Passing Yards": True,
@@ -309,19 +239,24 @@ if __name__ == '__main__':
         "Defensive TD": False
     }
 
-
-    query = build_query(test_data)
+    # Start of Main
+    query = build_query(stats)
     supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_SECRET_KEY"))
-    generated = player_generator(supabase, query, 3)
+    generated = player_generator(supabase, query, 10)
     position_heaps = {}
+    player_attributes = {}
+    player_id = 0
+
+    test = {}
 
     for player in generated:
-        player_score = score_player(player, test_toggles, test_data)
-        replacement_scores(player, position_heaps, test_settings, player_score)
+        player_score = score_player(player, toggles, stats)
+        replacement_scores(player, position_heaps, settings, player_score)
+        player_attributes[player_id] = {}
+        player_attributes[player_id]["name"] = player.get("player")
+        player_attributes[player_id]["position"] = player.get("position")
+        player_attributes[player_id]["score"] = player_score
+        player_id += 1
 
-
-
-""" 
-    output = calculate(test_data, test_settings, test_toggles)
-    with open("output.csv", 'wb') as f:  # 'wb', not 'w' -- and drop newline='', it's a text-mode-only arg
-        f.write(output.getvalue()) """
+    encoded_output = write_to_csv(player_attributes, position_heaps)
+    return encoded_output
