@@ -6,6 +6,7 @@ import heapq
 import csv
 import io
 from pathlib import Path
+import time
 
 OFFENSE_STATS = {
     "Pass Attempts": "pass_att",
@@ -82,14 +83,25 @@ def player_generator(supabase, columns, page_size=1000):
         start += page_size
 
 def build_query(user_selected_data):
-    stats_to_calculate = {}
-    stats_to_calculate_query = ["player", "position"]
 
-    # Figure out what stats to query
-    for ui_stat, ui_stat_value in user_selected_data.items():
-        if ui_stat_value['selected']:
-            stats_to_calculate[UI_TO_DB[ui_stat]] = ui_stat_value
-            stats_to_calculate_query.append(UI_TO_DB[ui_stat])
+    if isinstance(user_selected_data, dict):
+        stats_to_calculate = {}
+        stats_to_calculate_query = ["player", "position"]
+
+        if user_selected_data == {}:
+            raise ValueError(f"malformed entry for '{user_selected_data}': expected a dictionary with 'selected' key")
+
+        # Figure out what stats to query
+        for ui_stat, ui_stat_value in user_selected_data.items():
+            if not isinstance(ui_stat_value, dict) or 'selected' not in ui_stat_value:
+                raise ValueError(f"malformed entry for '{ui_stat}': expected a dictionary with 'selected' key")
+
+            if ui_stat_value['selected']:
+                stats_to_calculate[UI_TO_DB[ui_stat]] = ui_stat_value
+                stats_to_calculate_query.append(UI_TO_DB[ui_stat])
+    else:
+        raise TypeError(f"build_query only accepts a a JSON object containing player information. Received {user_selected_data} instead.")
+
 
     return stats_to_calculate_query
 
@@ -242,12 +254,11 @@ def calculate(stats, settings, toggles):
     # Start of Main
     query = build_query(stats)
     supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_SECRET_KEY"))
-    generated = player_generator(supabase, query, 10)
     position_heaps = {}
     player_attributes = {}
     player_id = 0
 
-    test = {}
+    generated = player_generator(supabase, query, 1000)
 
     for player in generated:
         player_score = score_player(player, toggles, stats)
@@ -260,3 +271,4 @@ def calculate(stats, settings, toggles):
 
     encoded_output = write_to_csv(player_attributes, position_heaps)
     return encoded_output
+

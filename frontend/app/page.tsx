@@ -7,6 +7,7 @@ import { useState, useEffect, useRef } from "react";
 import { StatEntry } from "./types/stats";
 import {Toggles} from "./context/SwitchContext"
 import DownloadCard from "./components/DownloadCard";
+import {Validity} from "./context/FormValidityContext"
 
 export default function Home() {
 
@@ -21,6 +22,7 @@ export default function Home() {
   const settings = useRef<Record<string, StatEntry>> ({})
   const [toggleMap, setToggleMap] = useState<Record<string, boolean>>({})
   const [csvUrl, setCsvUrl] = useState("https://google.com");
+  const [validEntries, setValidEntries] = useState<Record<string, boolean>>({})
 
   function updateToggleMap(buttonName : string){
     setToggleMap(prev => {
@@ -50,6 +52,10 @@ export default function Home() {
     settings.current[setting] = {...existing, ...patch};
     console.log(settings);
     console.log("")
+  }
+
+  function determineValidity(label: string, valid: boolean){
+    setValidEntries(prev => ({...prev, [label] : valid}))
   }
 
   async function submit(){
@@ -87,16 +93,19 @@ export default function Home() {
         </header>
         <main className="flex flex-col items-center w-full max-w-4xl px-4 gap-6">
           <DownloadCard csvLink={csvUrl} loading={mainContentState} buttonLabel="Your Strategy"></DownloadCard>
+          <Validity.Provider value={{validity: validEntries, setValidity: determineValidity}}>
           <Toggles.Provider value={{toggleMap: toggleMap, updateMap: updateToggleMap}}>
             <StatButtonContainer label="League Settings" endpoint="/settings" loading={mainContentState} submit={getSettings}></StatButtonContainer>
             <StatButtonContainer label="Offensive Stats" endpoint="/offense" loading={mainContentState} submit={setStats}></StatButtonContainer>
             <StatButtonContainer label="Defensive Stats" endpoint="/defense" loading={mainContentState} submit={setStats}></StatButtonContainer>
           </Toggles.Provider>
+          </Validity.Provider>
+
         </main>
         <Loader state={mainContentState}></Loader>
         <div className="pb-10">
-          <Btn label="Calculate" action={submit} loading={mainContentState} appearOnPage={1}></Btn>
-          <Btn label="Back" action={reset} loading={mainContentState} appearOnPage={3}></Btn>
+          <Btn label="Calculate" action={submit} loading={mainContentState} appearOnPage={1} validInputMap={validEntries}></Btn>
+          <Btn label="Back" action={reset} loading={mainContentState} appearOnPage={3} validInputMap={{}}></Btn>
         </div>
 
       </div>

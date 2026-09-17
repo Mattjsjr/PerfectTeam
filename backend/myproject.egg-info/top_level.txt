@@ -1,0 +1,5 @@
+csv
+node_modules
+python
+r_script
+venv

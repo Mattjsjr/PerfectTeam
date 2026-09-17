@@ -1,7 +1,3 @@
-def mutate(dictionary):
-    dictionary["mutate"] = "mutate"
+from calculate import *
 
-if __name__ == '__main__':
-    dictionary = {}
-    mutate(dictionary)
-    print(dictionary)
+build_query({})
