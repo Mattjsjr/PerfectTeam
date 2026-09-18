@@ -33,7 +33,7 @@ function FieldEntry({ label, onSelect } : { label: string, onSelect: OnChange })
                     onSelect(label, {value : v})
                     setValidity(label, true)
                 } else {
-                    setError("Input a number")
+                    setError("Number [1-24]")
                     setValidity(label, false)
                 }
         }} 

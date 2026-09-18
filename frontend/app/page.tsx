@@ -56,6 +56,8 @@ export default function Home() {
 
   function determineValidity(label: string, valid: boolean){
     setValidEntries(prev => ({...prev, [label] : valid}))
+    console.log(validEntries)
+    console.log()
   }
 
   async function submit(){

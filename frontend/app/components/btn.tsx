@@ -5,8 +5,9 @@ function Btn({label, action, loading, appearOnPage, validInputMap} : {label: str
     let blocked = false;
 
     for (const validity in validInputMap){
-        if (validInputMap[validity]){
-            blocked = true
+        if (!validInputMap[validity]){
+            blocked = true;
+            break;
         }
     }
     
