@@ -105,41 +105,62 @@ def build_query(user_selected_data):
 
     return stats_to_calculate_query
 
-def fetch_all_players(supabase, columns):
-    all_rows = []
-    page_size = 1000
-    start = 0
+def validate_toggles_stats(toggles, stats_to_calculate):
 
-    while True:
-        response = (
-            supabase.table("player_new")
-            .select(",".join(columns))
-            .range(start, start + page_size - 1)
-            .execute()
-        )
-        batch = response.data
-        all_rows.extend(batch)
+    for stat, stat_value in stats_to_calculate.items():
+        try:
+            user_facing_stat =  ""
 
-        if len(batch) < page_size:
-            break  # last page was partial, so we're done
+            # Check to make sure the UI stat name is mapped to the DB stat name
+            if stat in DB_TO_UI:
+                user_facing_stat = DB_TO_UI.get(stat)
+            else:
+                raise ValueError(f"One of the given stats was unexpected: {stat}")
 
-        start += page_size
+            if user_facing_stat in stats_to_calculate:
+                # Check to make sure all the toggles are mapped
+                if toggles.get(user_facing_stat):
+                    stat_value = stats_to_calculate.get(user_facing_stat).get('value')
+                    # Make sure the stat is actually a number
+                    try:
+                        stat_value = float(stat_value)
+                    except:
+                        raise ValueError(f"One of the stats was not a number {user_facing_stat}: {stat_value}")
 
-    return all_rows
+                    # The stat cannot be 0 because it will be a divisor 
+                    if stat_value == 0:
+                        raise ValueError(f"0 was input for one of the stats {user_facing_stat} : {stat_value}")
+                    
+                else:
+                    raise ValueError(f"There is a toggle missing {user_facing_stat}")
+
+        except Exception as error:
+            raise ValueError(f"The given stats weren't valid: {error}")
+
+    return True
+        
 
 def score_player(player, toggles, stats_to_calculate):
+
+    '''
+    score_player 
+    '''
+
     player_score = 0
 
     # Calculate their score based on the selected stats, key refers to a stat or a column on the player table
-    for key, value in player.items(): # Loops through a player row
+    for stat, stat_value in player.items(): # Loops through a player row
 
-        user_facing_stat = DB_TO_UI[key] if key in DB_TO_UI else ""
+        try:
+            user_facing_stat = DB_TO_UI.get(stat) if stat in DB_TO_UI else ""
 
-        if user_facing_stat in stats_to_calculate:
-            if toggles[user_facing_stat]:
-                player_score += value / float(stats_to_calculate[user_facing_stat]['value'])
-            else:
-                player_score += value * float(stats_to_calculate[user_facing_stat]['value']) 
+            if user_facing_stat in stats_to_calculate:
+                if toggles.get(user_facing_stat):
+                    player_score += stat_value / float(stats_to_calculate.get(user_facing_stat).get('value'))
+                else:
+                    player_score += stat_value * float(stats_to_calculate.get(user_facing_stat).get('value')) 
+        except (TypeError, ValueError):
+            raise ValueError(f"Invalid value for '{stat}")
 
     return player_score
 
@@ -259,6 +280,7 @@ def calculate(stats, settings, toggles):
     player_id = 0
 
     generated = player_generator(supabase, query, 1000)
+    validate_toggles_stats(toggles, stats)
 
     for player in generated:
         player_score = score_player(player, toggles, stats)
