@@ -17,12 +17,30 @@ export default function Home() {
   2 : Loading
   3 : Loaded
   */
+
   const [mainContentState, setMainContentState] = useState(1)
   const [selectedStats, setSelectedStats] = useState<Record<string, StatEntry>>({})
   const settings = useRef<Record<string, StatEntry>> ({})
   const [toggleMap, setToggleMap] = useState<Record<string, boolean>>({})
-  const [csvUrl, setCsvUrl] = useState("https://google.com");
+  const [csvUrl, setCsvUrl] = useState("");
   const [validEntries, setValidEntries] = useState<Record<string, boolean>>({})
+  const [demo, setDemo] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!demo){
+        async function checkIfOnline() {
+            try {
+                const res = await fetch(`http://localhost:5000/echo`)
+            } catch (e) {
+                console.log(`Error fetching at home ${e}`)
+                console.log(`Enabling demo`);
+                setDemo(true);
+            }
+        }
+        checkIfOnline();
+    }
+
+  }, []);
 
   function updateToggleMap(buttonName : string){
     setToggleMap(prev => {
@@ -64,7 +82,6 @@ export default function Home() {
     setMainContentState(2);
 
     try {
-      console.log(selectedStats);
       const response = await fetch("http://localhost:5000/submit", {
         method: 'POST',
         headers: {
@@ -79,7 +96,18 @@ export default function Home() {
 
     } catch (error){
       console.log(`Error sending the stats up ${error}`)
+      console.log(`Enabling demo`)
+      setDemo(true);
     }
+  }
+
+  async function demoSubmit(){
+    setMainContentState(2);
+    setTimeout(() => {
+      setCsvUrl("/output.csv")
+      setMainContentState(3);
+    }, 8000);
+
   }
 
   function reset(){
@@ -91,22 +119,26 @@ export default function Home() {
     <>
       <div className="flex flex-col flex-1 items-center justify-start bg-background font-sans gap-6">
         <header className="flex items-center justify-center w-full px-6 py-6 bg-sidebar text-sidebar-foreground border-b border-sidebar-border">
-          <h1 className="font-heading text-3xl tracking-wide">Perfect Team</h1>
+          <h1 className="font-heading text-3xl tracking-wide">Perfect Team{demo && " (Offline Demo)"}</h1>
         </header>
         <main className="flex flex-col items-center w-full max-w-4xl px-4 gap-6">
           <DownloadCard csvLink={csvUrl} loading={mainContentState} buttonLabel="Your Strategy"></DownloadCard>
           <Validity.Provider value={{validity: validEntries, setValidity: determineValidity}}>
           <Toggles.Provider value={{toggleMap: toggleMap, updateMap: updateToggleMap}}>
-            <StatButtonContainer label="League Settings" endpoint="/settings" loading={mainContentState} submit={getSettings}></StatButtonContainer>
-            <StatButtonContainer label="Offensive Stats" endpoint="/offense" loading={mainContentState} submit={setStats}></StatButtonContainer>
-            <StatButtonContainer label="Defensive Stats" endpoint="/defense" loading={mainContentState} submit={setStats}></StatButtonContainer>
+            {!demo ? (<>
+              <StatButtonContainer label="League Settings" endpoint="/settings" loading={mainContentState} submit={getSettings}></StatButtonContainer>
+              <StatButtonContainer label="Offensive Stats" endpoint="/offense" loading={mainContentState} submit={setStats}></StatButtonContainer>
+              <StatButtonContainer label="Defensive Stats" endpoint="/defense" loading={mainContentState} submit={setStats}></StatButtonContainer>
+            </>) : <StatButtonContainer label="Demo" endpoint="/settings" loading={mainContentState} submit={getSettings}></StatButtonContainer>
+}
+
           </Toggles.Provider>
           </Validity.Provider>
 
         </main>
         <Loader state={mainContentState}></Loader>
         <div className="pb-10">
-          <Btn label="Calculate" action={submit} loading={mainContentState} appearOnPage={1} validInputMap={validEntries}></Btn>
+          <Btn label="Calculate" action={!demo ? submit : demoSubmit} loading={mainContentState} appearOnPage={1} validInputMap={validEntries}></Btn>
           <Btn label="Back" action={reset} loading={mainContentState} appearOnPage={3} validInputMap={{}}></Btn>
         </div>
 

@@ -55,6 +55,10 @@ def submit():
         print(f'Some of the required fields: (selectedStats, selectedSettings, or selectedToggles)') 
         return "Some fields are missing", 400
 
+@app.route("/echo", methods=['POST'])
+def echo():
+    return "Online!"
+
      
 
 if __name__ == "__main__":
