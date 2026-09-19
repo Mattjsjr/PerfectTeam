@@ -67,14 +67,6 @@ Tests:
 pytest
 ```
 
-## Where it stands
-
-The scoring engine, the pagination, the replacement level math, and the CSV export all work end to end, and there's a pytest suite covering query building and input validation. Things I'm still working on:
-
-* `calculate()` currently overwrites its arguments with a known good payload so I could iterate on the scoring math in isolation. Removing that stub is the next commit.
-* The error handling in `/submit` is a bare except that swallows the real reason a request failed. It needs to be specific and it needs to return something useful to the client.
-* Projections are loaded into Supabase out of band. An ingest job belongs in this repo.
-
 ## Stack
 
 Python, Flask, Supabase, pandas, pytest on the backend. TypeScript, Next.js, React, Tailwind, shadcn/ui, Framer Motion, RoughJS, Zod, and React Hook Form on the frontend.
